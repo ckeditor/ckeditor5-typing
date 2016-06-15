@@ -1,9 +1,9 @@
-CKEditor 5 Typing Feature
+CKEditor 5 Input Feature
 ========================================
 
-[![devDependency Status](https://david-dm.org/ckeditor/ckeditor5-typing/dev-status.svg)](https://david-dm.org/ckeditor/ckeditor5-typing#info=devDependencies)
+[![devDependency Status](https://david-dm.org/ckeditor/ckeditor5-input/dev-status.svg)](https://david-dm.org/ckeditor/ckeditor5-input#info=devDependencies)
 
-Typing feature for CKEditor 5. More information about the project can be found at the following url: <https://github.com/ckeditor/ckeditor5-typing>.
+Typing feature for CKEditor 5. More information about the project can be found at the following url: <https://github.com/ckeditor/ckeditor5-input>.
 
 ## License
 

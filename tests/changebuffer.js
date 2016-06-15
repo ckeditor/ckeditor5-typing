@@ -5,7 +5,7 @@
 
 'use strict';
 
-import ChangeBuffer from '/ckeditor5/typing/changebuffer.js';
+import ChangeBuffer from '/ckeditor5/input/changebuffer.js';
 import Document from '/ckeditor5/engine/model/document.js';
 import Batch from '/ckeditor5/engine/model/batch.js';
 import Position from '/ckeditor5/engine/model/position.js';

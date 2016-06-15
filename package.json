@@ -1,7 +1,7 @@
 {
-  "name": "ckeditor5-typing",
+  "name": "ckeditor5-input",
   "version": "0.0.1",
-  "description": "Typing feature for CKEditor 5.",
+  "description": "Input feature for CKEditor 5.",
   "keywords": [],
   "dependencies": {},
   "devDependencies": {

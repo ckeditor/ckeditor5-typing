@@ -1,7 +1,7 @@
 Software License Agreement
 ==========================
 
-**CKEditor 5 Typing Feature** – https://github.com/ckeditor/ckeditor5-typing <br>
+**CKEditor 5 Input Feature** – https://github.com/ckeditor/ckeditor5-input <br>
 Copyright (c) 2003-2016, [CKSource](http://cksource.com) Frederico Knabben. All rights reserved.
 
 Licensed under the terms of any of the following licenses at your choice:
