@@ -13,8 +13,8 @@ import count from '../utils/count.js';
  *
  * Batches represent single undo steps, hence changes added to one single batch are undone together.
  *
- * The buffer has a configurable limit of atomic changes that it can accomodate. After the limit was
- * exceeded (see {@link typing.ChangeBuffer#input}), a new batch is created in {@link typing.ChangeBuffer#batch}.
+ * The buffer has a configurable limit of atomic changes that it can accommodate. After the limit was
+ * exceeded (see {@link input.ChangeBuffer#input}), a new batch is created in {@link input.ChangeBuffer#batch}.
  *
  * To use the change buffer you need to let it know about number of changes that has been added to the batch:
  *
@@ -24,7 +24,7 @@ import count from '../utils/count.js';
  *		buffer.batch.insert( pos, insertedCharacters );
  *		buffer.input( insertedCharacters.length );
  *
- * @memberOf typing
+ * @memberOf input
  */
 export default class ChangeBuffer {
 	/**
@@ -38,16 +38,16 @@ export default class ChangeBuffer {
 		 * Instance of the document.
 		 *
 		 * @readonly
-		 * @property {engine.treeModel.Document} typing.ChangeBuffer#document
+		 * @property {engine.treeModel.Document} input.ChangeBuffer#document
 		 */
 		this.document = doc;
 
 		/**
-		 * Number of atomic changes in the buffer. Once it exceeds the {@link typing.ChangeBuffer#limit},
-		 * {@link typing.ChangeBuffer#batch batch} is set to a new batch.
+		 * Number of atomic changes in the buffer. Once it exceeds the {@link input.ChangeBuffer#limit},
+		 * {@link input.ChangeBuffer#batch batch} is set to a new batch.
 		 *
 		 * @readonly
-		 * @property {Number} typing.ChangeBuffer#size
+		 * @property {Number} input.ChangeBuffer#size
 		 */
 		this.size = 0;
 
@@ -55,7 +55,7 @@ export default class ChangeBuffer {
 		 * Maximum number of atomic changes which can be contained in one batch.
 		 *
 		 * @readonly
-		 * @property {Number} typing.ChangeBuffer#limit
+		 * @property {Number} input.ChangeBuffer#limit
 		 */
 		this.limit = limit;
 
@@ -72,20 +72,20 @@ export default class ChangeBuffer {
 		 * The current batch instance.
 		 *
 		 * @private
-		 * @property typing.ChangeBuffer#_batch
+		 * @property input.ChangeBuffer#_batch
 		 */
 
 		/**
 		 * The callback to document change event which later needs to be removed.
 		 *
 		 * @private
-		 * @property typing.ChangeBuffer#_changeCallback
+		 * @property input.ChangeBuffer#_changeCallback
 		 */
 	}
 
 	/**
-	 * Current batch to which a feature should add its deltas. Once the {@link typing.ChangeBuffer#size}
-	 * reach or exceedes the {@link typing.ChangeBuffer#limit}, then the batch is set to a new instance and size is reset.
+	 * Current batch to which a feature should add its deltas. Once the {@link input.ChangeBuffer#size}
+	 * reach or exceeds the {@link input.ChangeBuffer#limit}, then the batch is set to a new instance and size is reset.
 	 *
 	 * @type {engine.treeModel.batch.Batch}
 	 */
@@ -98,8 +98,8 @@ export default class ChangeBuffer {
 	}
 
 	/**
-	 * Input number of changes into the buffer. Once the {@link typing.ChangeBuffer#size}
-	 * reach or exceedes the {@link typing.ChangeBuffer#limit}, then the batch is set to a new instance and size is reset.
+	 * Input number of changes into the buffer. Once the {@link input.ChangeBuffer#size}
+	 * reach or exceeds the {@link input.ChangeBuffer#limit}, then the batch is set to a new instance and size is reset.
 	 *
 	 * @param {Number} changeCount Number of atomic changes to input.
 	 */

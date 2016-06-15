@@ -16,12 +16,12 @@ import diffToChanges from '../utils/difftochanges.js';
 import { getCode } from '../utils/keyboard.js';
 
 /**
- * The typing feature. Handles... typing.
+ * The input feature.
  *
- * @memberOf typing
+ * @memberOf input
  * @extends ckeditor5.Feature
  */
-export default class Typing extends Feature {
+export default class Input extends Feature {
 	/**
 	 * @inheritDoc
 	 */
@@ -33,9 +33,9 @@ export default class Typing extends Feature {
 		 * Typing's change buffer used to group subsequent changes into batches.
 		 *
 		 * @protected
-		 * @member {typing.ChangeBuffer} typing.Typing#_buffer
+		 * @member {input.ChangeBuffer} input.Input#_buffer
 		 */
-		this._buffer = new ChangeBuffer( editor.document, editor.config.get( 'typing.undoStep' ) || 20 );
+		this._buffer = new ChangeBuffer( editor.document, editor.config.get( 'input.undoStep' ) || 20 );
 
 		// TODO The above default config value should be defines using editor.config.define() once it's fixed.
 
@@ -102,27 +102,27 @@ export default class Typing extends Feature {
  * Helper class for translating DOM mutations into model changes.
  *
  * @private
- * @member typing.typing
+ * @member input.input
  */
 class MutationHandler {
 	/**
 	 * Creates instance of the mutation handler.
 	 *
 	 * @param {engine.EditingController} editing
-	 * @param {typing.ChangeBuffer} buffer
+	 * @param {input.ChangeBuffer} buffer
 	 */
 	constructor( editing, buffer ) {
 		/**
 		 * The editing controller.
 		 *
-		 * @member {engine.EditingController} typing.typing.MutationHandler#editing
+		 * @member {engine.EditingController} input.input.MutationHandler#editing
 		 */
 		this.editing = editing;
 
 		/**
 		 * The change buffer.
 		 *
-		 * @member {engine.EditingController} typing.typing.MutationHandler#buffer
+		 * @member {engine.EditingController} input.input.MutationHandler#buffer
 		 */
 		this.buffer = buffer;
 
@@ -130,7 +130,7 @@ class MutationHandler {
 		 * Number of inserted characters which need to be feed to the {@link #buffer change buffer}
 		 * on {@link #commit}.
 		 *
-		 * @member {Number} typing.typing.MutationHandler#insertedCharacterCount
+		 * @member {Number} input.input.MutationHandler#insertedCharacterCount
 		 */
 		this.insertedCharacterCount = 0;
 
@@ -142,7 +142,7 @@ class MutationHandler {
 		 * for ones like autocorrection or spellchecking. The caret should be placed after the whole piece
 		 * which was corrected (e.g. a word), not after the letter that was replaced.
 		 *
-		 * @member {engine.model.Position} typing.typing.MutationHandler#selectionPosition
+		 * @member {engine.model.Position} input.input.MutationHandler#selectionPosition
 		 */
 	}
 

@@ -6,7 +6,7 @@
 'use strict';
 
 import VirtualTestEditor from '/tests/ckeditor5/_utils/virtualtesteditor.js';
-import Typing from '/ckeditor5/typing/typing.js';
+import Input from '/ckeditor5/input/input.js';
 import Paragraph from '/ckeditor5/paragraph/paragraph.js';
 
 import ModelRange from '/ckeditor5/engine/model/range.js';
@@ -20,14 +20,14 @@ import { getCode } from '/ckeditor5/utils/keyboard.js';
 import { getData as getModelData } from '/tests/engine/_utils/model.js';
 import { getData as getViewData } from '/tests/engine/_utils/view.js';
 
-describe( 'Typing feature', () => {
-	let editor, model, modelRoot, view, viewRoot, listenter;
+describe( 'Input feature', () => {
+	let editor, model, modelRoot, view, viewRoot, listener;
 
 	before( () => {
-		listenter = Object.create( EmitterMixin );
+		listener = Object.create( EmitterMixin );
 
 		return VirtualTestEditor.create( {
-				features: [ Typing, Paragraph ]
+				features: [ Input, Paragraph ]
 			} )
 			.then( newEditor => {
 				editor = newEditor;
@@ -48,22 +48,22 @@ describe( 'Typing feature', () => {
 	} );
 
 	afterEach( () => {
-		listenter.stopListening();
+		listener.stopListening();
 	} );
 
-	it( 'has a buffer configured to default value of config.typing.undoStep', () => {
-		expect( editor.plugins.get( Typing )._buffer ).to.have.property( 'limit', 20 );
+	it( 'has a buffer configured to default value of config.input.undoStep', () => {
+		expect( editor.plugins.get( Input )._buffer ).to.have.property( 'limit', 20 );
 	} );
 
-	it( 'has a buffer configured to config.typing.undoStep', () => {
+	it( 'has a buffer configured to config.input.undoStep', () => {
 		return VirtualTestEditor.create( {
-				features: [ Typing ],
-				typing: {
+				features: [ Input ],
+				input: {
 					undoStep: 5
 				}
 			} )
 			.then( editor => {
-				expect( editor.plugins.get( Typing )._buffer ).to.have.property( 'limit', 5 );
+				expect( editor.plugins.get( Input )._buffer ).to.have.property( 'limit', 5 );
 			} );
 	} );
 
@@ -166,7 +166,7 @@ describe( 'Typing feature', () => {
 					ModelRange.createFromParentsAndOffsets( modelRoot.getChild( 0 ), 2, modelRoot.getChild( 0 ), 4 ) ] );
 			} );
 
-			listenter.listenTo( view, 'keydown', () => {
+			listener.listenTo( view, 'keydown', () => {
 				expect( getModelData( model ) ).to.equal( '<paragraph>fo<selection />ar</paragraph>' );
 
 				view.fire( 'mutations', [
@@ -229,15 +229,15 @@ describe( 'Typing feature', () => {
 
 	describe( 'destroy', () => {
 		it( 'should destroy change buffer', () => {
-			const typing = new Typing( new VirtualTestEditor() );
-			typing.init();
+			const input = new Input( new VirtualTestEditor() );
+			input.init();
 
-			const destroy = typing._buffer.destroy = sinon.spy();
+			const destroy = input._buffer.destroy = sinon.spy();
 
-			typing.destroy();
+			input.destroy();
 
 			expect( destroy.calledOnce ).to.be.true;
-			expect( typing._buffer ).to.be.null;
+			expect( input._buffer ).to.be.null;
 		} );
 	} );
 } );

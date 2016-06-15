@@ -1,7 +1,7 @@
-CKEditor 5 Typing Feature Changelog
+CKEditor 5 Input Feature Changelog
 ========================================
 
-## CKEditor 5 Typing Feature 0.0.2
+## CKEditor 5 Input Feature 0.0.2
 
 **Major|Minor|Patch Release** - Build Date: yyyy-mm-dd
 
@@ -20,6 +20,6 @@ Other Changes:
 * Item 1
 * Item 2
 
-## CKEditor 5 Typing Feature 0.0.1
+## CKEditor 5 Input Feature 0.0.1
 
 ...
