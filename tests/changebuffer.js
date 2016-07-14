@@ -11,19 +11,19 @@ import Batch from '/ckeditor5/engine/model/batch.js';
 import Position from '/ckeditor5/engine/model/position.js';
 
 describe( 'ChangeBuffer', () => {
-	const CHANGE_LIMIT = 3;
+	const changeLimit = 3;
 	let doc, buffer, root;
 
 	beforeEach( () => {
 		doc = new Document();
 		root = doc.createRoot();
-		buffer = new ChangeBuffer( doc, CHANGE_LIMIT );
+		buffer = new ChangeBuffer( doc, changeLimit );
 	} );
 
 	describe( 'constructor', () => {
 		it( 'sets all properties', () => {
 			expect( buffer ).to.have.property( 'document', doc );
-			expect( buffer ).to.have.property( 'limit', CHANGE_LIMIT );
+			expect( buffer ).to.have.property( 'limit', changeLimit );
 			expect( buffer ).to.have.property( 'size', 0 );
 		} );
 
@@ -43,7 +43,7 @@ describe( 'ChangeBuffer', () => {
 		it( 'is reset once changes reaches the limit', () => {
 			const batch1 = buffer.batch;
 
-			buffer.input( CHANGE_LIMIT - 1 );
+			buffer.input( changeLimit - 1 );
 
 			expect( buffer.batch ).to.equal( batch1 );
 
@@ -60,7 +60,7 @@ describe( 'ChangeBuffer', () => {
 			const batch1 = buffer.batch;
 
 			// Exceed the limit with one big jump to ensure that >= operator was used.
-			buffer.input( CHANGE_LIMIT + 1 );
+			buffer.input( changeLimit + 1 );
 
 			expect( buffer.batch ).to.not.equal( batch1 );
 			expect( buffer.size ).to.equal( 0 );
