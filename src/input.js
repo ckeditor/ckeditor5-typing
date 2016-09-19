@@ -39,9 +39,11 @@ export default class Input extends Feature {
 			this._handleInput( data );
 
 			// TODO
-			// * Handle target ranges so we can work with replacements.
-			// * What if I press ctrl+b, accent and then "a"? the result should be bolded, but will it be?
-			// * Check IME..
+			// * Handle target ranges so we can work with replacements. (DONE)
+			// * What if I press ctrl+b, accent and then "a"? the result should be bolded, but will it be? (BROKEN)
+			// * Check IME.. (BROKEN)
+			//
+			// * IME and á composition are broken due to bug in the renderer. We can't test them now.
 
 			data.preventDefault();
 		} );
@@ -77,6 +79,8 @@ export default class Input extends Feature {
 			const viewRange = evtData.getTargetRanges()[ 0 ];
 
 			if ( viewRange ) {
+				console.log( 'Overriding target range...' ); // jshint ignore:line
+
 				const sel = new Selection();
 				sel.addRange( editingController.mapper.toModelRange( viewRange ) );
 

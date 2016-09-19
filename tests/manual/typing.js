@@ -6,6 +6,9 @@
 /* globals console:false, window, document */
 
 import ClassicEditor from '/ckeditor5/editor-classic/classic.js';
+import { getData } from '/tests/engine/_utils/model.js';
+
+window.getData = getData;
 
 ClassicEditor.create( document.querySelector( '#editor' ), {
 	features: [ 'enter', 'typing', 'paragraph', 'undo', 'basic-styles/bold', 'basic-styles/italic', 'headings' ],
