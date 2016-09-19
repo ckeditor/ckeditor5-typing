@@ -10,8 +10,21 @@ import { getData } from '/tests/engine/_utils/model.js';
 
 window.getData = getData;
 
+window.setInterval( function() {
+	console.log( getData( window.editor.document ) );
+}, 3000 );
+
 ClassicEditor.create( document.querySelector( '#editor' ), {
-	features: [ 'enter', 'typing', 'paragraph', 'undo', 'basic-styles/bold', 'basic-styles/italic', 'headings' ],
+	features: [
+		'enter',
+		'typing',
+		'typing/norenderduringcomposition',
+		'paragraph',
+		'undo',
+		'basic-styles/bold',
+		'basic-styles/italic',
+		'headings'
+	],
 	toolbar: [ 'headings', 'bold', 'italic', 'undo', 'redo' ]
 } )
 .then( editor => {
