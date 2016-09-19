@@ -23,6 +23,7 @@ export default class DeleteObserver extends DomEventObserver {
 	 * @inheritDoc
 	 */
 	onDomEvent( domEvt ) {
+		const doc = this.document;
 		const inputType = domEvt.inputType;
 
 		if ( !inputType.startsWith( 'delete' ) ) {
@@ -30,16 +31,23 @@ export default class DeleteObserver extends DomEventObserver {
 		}
 
 		const cancelable = domEvt.cancelable;
-		const unit = getUnit( inputType );
 		const direction = inputType.endsWith( 'Forward' ) ? 'forward' : 'backward';
+		const unit = getUnit( inputType );
 
-		// TODO convert also getTargetRanges(). They can be helpful to support the delete commands
-		// with what a unit means (word, line, etc.).
+		// Useful for debugging:
+		// const r = window.document.getSelection().getRangeAt( 0 );
+		// const r = domEvt.getTargetRanges()[ 0 ];
+		// console.log( r.startContainer, r.startOffset, r.endOffset );
 
 		this.fire( 'delete', domEvt, {
 			cancelable,
 			direction,
-			unit
+			unit,
+
+			getTargetRanges() {
+				return Array.from( domEvt.getTargetRanges() )
+					.map( domRange => doc.domConverter.domRangeToView( domRange ) );
+			}
 		} );
 	}
 }

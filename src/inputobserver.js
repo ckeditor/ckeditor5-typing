@@ -23,6 +23,7 @@ export default class InputObserver extends DomEventObserver {
 	 * @inheritDoc
 	 */
 	onDomEvent( domEvt ) {
+		const doc = this.document;
 		const inputType = domEvt.inputType;
 
 		if ( inputType != 'insertText' ) {
@@ -30,7 +31,20 @@ export default class InputObserver extends DomEventObserver {
 		}
 
 		this.fire( 'input', domEvt, {
-			text: domEvt.data
+			text: domEvt.data,
+
+			getTargetRanges() {
+				// There are two issues here:
+				//
+				// 1. We should be able to use domEvt.getTargetRanges() like in the DeleteObserver,
+				// but beforeinput with type `insertText` returns an empty array.
+				// 2. Even if we plan to use the selection, we shouldn't access it through `window.document`
+				// but using some more sophisticated method.
+				const targetRanges = [ window.document.getSelection().getRangeAt( 0 ) ]; // jshint ignore:line
+
+				return Array.from( targetRanges )
+					.map( domRange => doc.domConverter.domRangeToView( domRange ) );
+			}
 		} );
 	}
 }

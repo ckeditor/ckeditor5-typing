@@ -7,6 +7,7 @@ import Feature from '../core/feature.js';
 import ChangeBuffer from './changebuffer.js';
 import InputObserver from './inputobserver.js';
 import Text from '../engine/model/text.js';
+import Selection from '../engine/model/selection.js';
 
 /**
  * Handles text input coming from the keyboard or other input methods.
@@ -35,7 +36,7 @@ export default class Input extends Feature {
 		editingView.addObserver( InputObserver );
 
 		this.listenTo( editingView, 'input', ( evt, data ) => {
-			this._inputText( data.text );
+			this._handleInput( data );
 
 			// TODO
 			// * Handle target ranges so we can work with replacements.
@@ -61,17 +62,30 @@ export default class Input extends Feature {
 	 *
 	 * @param {String} text
 	 */
-	_inputText( text ) {
+	_handleInput( evtData ) {
+		const editingController = this.editor.editing;
 		const doc = this.editor.document;
+		const text = evtData.text;
 
 		doc.enqueueChanges( () => {
-			if ( !doc.selection.isCollapsed ) {
-				this.editor.execute( 'delete' );
+			// Use target ranges, because they will contain more information than the selection
+			// (plus, there might've been no selectionchange event yet).
+			// E.g. when typing accent + "a" (Spanish-ISO, they should compose into "á"), when pressing
+			// "a" in the target ranges we'll find the accent character which needs to be replaced.
+			// The same with all other types of composition.
+
+			const viewRange = evtData.getTargetRanges()[ 0 ];
+
+			if ( viewRange ) {
+				const sel = new Selection();
+				sel.addRange( editingController.mapper.toModelRange( viewRange ) );
+
+				if ( !sel.isCollapsed ) {
+					doc.composer.deleteContents( this._buffer.batch, sel );
+				}
 			}
 
-			const textNode = new Text( text, doc.selection.getAttributes() );
-
-			this._buffer.batch.insert( doc.selection.anchor, textNode );
+			this._buffer.batch.insert( doc.selection.anchor, new Text( text, doc.selection.getAttributes() ) );
 			this._buffer.input( text.length );
 		} );
 	}
