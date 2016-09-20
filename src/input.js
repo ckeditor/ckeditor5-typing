@@ -40,10 +40,12 @@ export default class Input extends Feature {
 
 			// TODO
 			// * Handle target ranges so we can work with replacements. (DONE)
-			// * What if I press ctrl+b, accent and then "a"? the result should be bolded, but will it be? (BROKEN)
-			// * Check IME.. (BROKEN)
+			// * What if I press ctrl+b, accent and then "a"? the result should be bolded, but will it be? (DONE)
+			// * Check IME.. (DONE)
 			//
-			// * IME and á composition are broken due to bug in the renderer. We can't test them now.
+			// * IME and á composition were totally broken due to a bug in the renderer. In ./norenderduringcomposition.js
+			// I made a quick hack to prevent rendering for the whole composition and both things started to work.
+			// Unfortunately, IME for Hiragana breaks the engine pretty quickly and it's too hard to debug it quickly.
 
 			data.preventDefault();
 		} );
