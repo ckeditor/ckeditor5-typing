@@ -35,7 +35,7 @@ export default class InputCommand extends Command {
 		 * @private
 		 * @member {typing.ChangeBuffer} typing.InputCommand#buffer
 		 */
-		this._buffer = new ChangeBuffer( editor.document, editor.config.get( 'undo.step' ) || 20 );
+		this._buffer = new ChangeBuffer( editor.document, editor.config.get( 'undo.step' ) );
 
 		/**
 		 * @readonly
@@ -45,7 +45,7 @@ export default class InputCommand extends Command {
 	}
 
 	/**
-	 * Executes the input command. Depending on the `inputType` it handles `keydown` or `mutation` input.
+	 * Executes the input command.
 	 *
 	 * @param {Object} options The command options.
 	 * @param {Array.<Object>} options.mutations List of view mutations.
@@ -119,6 +119,9 @@ class MutationHandler {
 		}
 
 		this.buffer.input( Math.max( this.insertedCharacterCount, 0 ) );
+
+		// Reset the counter after reaching buffer's limit.
+		this.insertedCharacterCount = this.insertedCharacterCount % this.buffer.limit;
 	}
 
 	_handleTextMutation( mutation, viewSelection ) {

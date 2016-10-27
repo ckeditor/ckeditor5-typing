@@ -5,6 +5,7 @@
 
 import Feature from '../core/feature.js';
 import InputCommand from './inputcommand.js';
+
 import { getCode } from '../utils/keyboard.js';
 
 /**
@@ -41,7 +42,7 @@ export default class Input extends Feature {
 	 * * Hundreds of mutations which could not be handled.
 	 * * But most importantly, loss of control over how the content is being deleted.
 	 *
-	 * The method is used in a low-priority listener, hence allowing other listeners (e.g. input or enter features)
+	 * The method is used in a low-priority listener, hence allowing other listeners (e.g. delete or enter features)
 	 * to handle the event.
 	 *
 	 * @private
