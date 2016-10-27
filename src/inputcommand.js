@@ -12,7 +12,6 @@ import ViewText from '../engine/view/text.js';
 
 import diff from '../utils/diff.js';
 import diffToChanges from '../utils/difftochanges.js';
-import { getCode } from '../utils/keyboard.js';
 
 /**
  * The input command. Used by the {@link typing.Input input feature} to handle inserting new characters.
@@ -25,12 +24,9 @@ export default class InputCommand extends Command {
 	 * Creates an instance of the command.
 	 *
 	 * @param {core.editor.Editor} editor
-	 * @param {'keydown'|'mutation'} inputType Type of input operation to handle.
 	 */
-	constructor( editor, inputType ) {
+	constructor( editor ) {
 		super( editor );
-
-		this.inputType = inputType;
 
 		/**
 		 * Input's change buffer used to group subsequent changes into batches.
@@ -51,48 +47,14 @@ export default class InputCommand extends Command {
 	/**
 	 * Executes the input command. Depending on the `inputType` it handles `keydown` or `mutation` input.
 	 *
-	 * @param {Object} [options] The command options.
-	 * @param {engine.view.observer.DomEventData} [options.evtData] Event data.
-	 * @param {Array.<Object>} [options.mutations] List of view mutations.
+	 * @param {Object} options The command options.
+	 * @param {Array.<Object>} options.mutations List of view mutations.
 	 * @param {engine.view.Selection} [options.viewSelection] Selection object of view.
 	 */
 	_doExecute( options = {} ) {
-		const { evtData, mutations, viewSelection } = options;
+		const { mutations, viewSelection } = options;
 
-		if ( this.inputType === 'keydown' ) {
-			this._handleKeydown( evtData );
-		}
-
-		if ( this.inputType === 'mutation' ) {
-			this._handleMutations( mutations, viewSelection );
-		}
-	}
-
-	/**
-	 * Handles the keydown event. We need to guess whether such keystroke is going to result
-	 * in typing. If so, then before character insertion happens, any selected content needs
-	 * to be deleted. Otherwise the default browser deletion mechanism would be
-	 * triggered, resulting in:
-	 *
-	 * * Hundreds of mutations which could not be handled.
-	 * * But most importantly, loss of control over how the content is being deleted.
-	 *
-	 * The method is used in a low-priority listener, hence allowing other listeners (e.g. input or enter features)
-	 * to handle the event.
-	 *
-	 * @private
-	 * @param {engine.view.observer.keyObserver.KeyEventData} evtData
-	 */
-	_handleKeydown( evtData ) {
-		const doc = this.editor.document;
-
-		if ( isSafeKeystroke( evtData ) || doc.selection.isCollapsed ) {
-			return;
-		}
-
-		doc.enqueueChanges( () => {
-			doc.composer.deleteContents( this._buffer.batch, doc.selection );
-		} );
+		this._handleMutations( mutations, viewSelection );
 	}
 
 	/**
@@ -290,42 +252,6 @@ class MutationHandler {
 
 		this.insertedCharacterCount -= length;
 	}
-}
-
-const safeKeycodes = [
-	getCode( 'arrowUp' ),
-	getCode( 'arrowRight' ),
-	getCode( 'arrowDown' ),
-	getCode( 'arrowLeft' ),
-	16, // Shift
-	17, // Ctrl
-	18, // Alt
-	20, // CapsLock
-	27, // Escape
-	33, // PageUp
-	34, // PageDown
-	35, // Home
-	36, // End
-];
-
-// Function keys.
-for ( let code = 112; code <= 135; code++ ) {
-	safeKeycodes.push( code );
-}
-
-// Returns `true` if a keystroke should not cause any content change caused by "typing".
-//
-// Note: This implementation is very simple and will need to be refined with time.
-//
-// @param {engine.view.observer.keyObserver.KeyEventData} keyData
-// @returns {Boolean}
-function isSafeKeystroke( keyData ) {
-	// Keystrokes which contain Ctrl don't represent typing.
-	if ( keyData.ctrlKey ) {
-		return true;
-	}
-
-	return safeKeycodes.includes( keyData.keyCode );
 }
 
 // Helper function that compares whether two given view nodes are same. It is used in `diff` when it's passed an array
