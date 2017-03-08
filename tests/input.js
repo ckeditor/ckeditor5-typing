@@ -434,6 +434,20 @@ describe( 'Input feature', () => {
 
 			expect( getModelData( model ) ).to.equal( '<paragraph>foo[]bar</paragraph>' );
 		} );
+
+		it( 'should do nothing during composition', () => {
+			model.enqueueChanges( () => {
+				model.selection.setRanges( [
+					ModelRange.createFromParentsAndOffsets( modelRoot.getChild( 0 ), 2, modelRoot.getChild( 0 ), 4 ) ] );
+			} );
+
+			view.isComposing = true;
+
+			view.fire( 'keydown', { keyCode: getCode( 'y' ) } );
+
+			expect( getModelData( model ) ).to.equal( '<paragraph>fo[ob]ar</paragraph>' );
+			expect( getViewData( view ) ).to.equal( '<p>fo{ob}ar</p>' );
+		} );
 	} );
 } );
 

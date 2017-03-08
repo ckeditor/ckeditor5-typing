@@ -60,14 +60,15 @@ export default class Input extends Plugin {
 	 * @param {module:typing/changebuffer~ChangeBuffer} buffer
 	 */
 	_handleKeydown( evtData, buffer ) {
-		const doc = this.editor.document;
+		const editor = this.editor;
+		const doc = editor.document;
 
-		if ( isSafeKeystroke( evtData ) || doc.selection.isCollapsed ) {
+		if ( isSafeKeystroke( evtData ) || doc.selection.isCollapsed || editor.editing.view.isComposing ) {
 			return;
 		}
 
 		doc.enqueueChanges( () => {
-			this.editor.data.deleteContent( doc.selection, buffer.batch );
+			editor.data.deleteContent( doc.selection, buffer.batch );
 		} );
 	}
 
