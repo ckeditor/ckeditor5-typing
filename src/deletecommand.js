@@ -10,6 +10,9 @@
 import Command from '@ckeditor/ckeditor5-core/src/command';
 import Selection from '@ckeditor/ckeditor5-engine/src/model/selection';
 import ChangeBuffer from './changebuffer';
+import Position from '@ckeditor/ckeditor5-engine/src/model/position';
+import Element from '@ckeditor/ckeditor5-engine/src/model/element';
+import Range from '@ckeditor/ckeditor5-engine/src/model/range';
 import count from '@ckeditor/ckeditor5-utils/src/count';
 
 /**
@@ -60,6 +63,8 @@ export default class DeleteCommand extends Command {
 	execute( options = {} ) {
 		const doc = this.editor.document;
 		const dataController = this.editor.data;
+		const root = doc.getRoot();
+		const schema = doc.schema;
 
 		doc.enqueueChanges( () => {
 			this._buffer.lock();
@@ -86,6 +91,25 @@ export default class DeleteCommand extends Command {
 
 			dataController.deleteContent( selection, this._buffer.batch );
 			this._buffer.input( changeCount );
+
+			// Check whether the whole content has been removed and whether schema allows inserting a paragraph.
+			// If the user will typing after removing the whole content, the user's input should be wrapped in the paragraph
+			// instead of any other element. See https://github.com/ckeditor/ckeditor5-typing/issues/61.
+			if (
+				Position.createAt( root ).isTouching( selection.getFirstPosition() ) &&
+				Position.createAt( root, 'end' ).isTouching( selection.getLastPosition() ) &&
+				schema.check( { name: 'paragraph', inside: root.name } )
+			) {
+				dataController.deleteContent( selection, this._buffer.batch );
+
+				this._buffer.batch.remove(
+					new Range( new Position( root, [ 0 ] ), new Position( root, [ 1 ] ) )
+				);
+
+				this._buffer.batch.insert(
+					new Position( root, [ 0 ] ), new Element( 'paragraph' )
+				);
+			}
 
 			doc.selection.setRanges( selection.getRanges(), selection.isBackward );
 
