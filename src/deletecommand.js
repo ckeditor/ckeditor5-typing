@@ -92,10 +92,6 @@ export default class DeleteCommand extends Command {
 			dataController.deleteContent( selection, this._buffer.batch );
 			this._buffer.input( changeCount );
 
-			doc.selection.setRanges( selection.getRanges(), selection.isBackward );
-
-			this._buffer.unlock();
-
 			// Check whether the whole content has been removed and whether schema allows inserting a paragraph.
 			// If the user will typing after removing the whole content, the user's input should be wrapped in the paragraph
 			// instead of any other element. See https://github.com/ckeditor/ckeditor5-typing/issues/61.
@@ -104,6 +100,8 @@ export default class DeleteCommand extends Command {
 				Position.createAt( root, 'end' ).isTouching( selection.getLastPosition() ) &&
 				schema.check( { name: 'paragraph', inside: root.name } )
 			) {
+				dataController.deleteContent( selection, this._buffer.batch );
+
 				this._buffer.batch.remove(
 					new Range( new Position( root, [ 0 ] ), new Position( root, [ 1 ] ) )
 				);
@@ -111,9 +109,11 @@ export default class DeleteCommand extends Command {
 				this._buffer.batch.insert(
 					new Position( root, [ 0 ] ), new Element( 'paragraph' )
 				);
-
-				doc.selection.setRanges( new Range( new Position( root, [ 0 ] ) ) );
 			}
+
+			doc.selection.setRanges( selection.getRanges(), selection.isBackward );
+
+			this._buffer.unlock();
 		} );
 	}
 }

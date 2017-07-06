@@ -13,7 +13,6 @@ import Undo from '@ckeditor/ckeditor5-undo/src/undo';
 import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
 import Italic from '@ckeditor/ckeditor5-basic-styles/src/italic';
 import Enter from '@ckeditor/ckeditor5-enter/src/enter';
-import Heading from '@ckeditor/ckeditor5-heading/src/heading';
 
 import Range from '@ckeditor/ckeditor5-engine/src/model/range';
 import Position from '@ckeditor/ckeditor5-engine/src/model/position';
@@ -29,7 +28,7 @@ describe( 'InputCommand integration', () => {
 		document.body.appendChild( editorElement );
 
 		return ClassicTestEditor.create( editorElement, {
-			plugins: [ Typing, Paragraph, Undo, Bold, Italic, Enter, Heading ],
+			plugins: [ Typing, Paragraph, Undo, Bold, Italic, Enter ],
 			typing: { undoStep: 3 }
 		} )
 		.then( newEditor => {
@@ -210,46 +209,6 @@ describe( 'InputCommand integration', () => {
 
 			expectOutput( '<paragraph>Foo <$text bold="true">B[]</$text> Bar</paragraph>',
 				'<p>Foo <strong>B{}</strong> Bar</p>' );
-		} );
-
-		// See https://github.com/ckeditor/ckeditor5-typing/issues/61.
-		it( 'leaves an empty paragraph after removing the whole content from editor #1', () => {
-			setModelData( doc, '[<heading1>Header 1</heading1><paragraph>Some text.</paragraph>]' );
-
-			editor.execute( 'delete' );
-
-			expectOutput( '<paragraph>[]</paragraph>', '<p>[]</p>' );
-		} );
-
-		// See https://github.com/ckeditor/ckeditor5-typing/issues/61.
-		it( 'leaves an empty paragraph after removing the whole content from editor #2', () => {
-			setModelData( doc, '<heading1>[Header 1</heading1><paragraph>Some text.]</paragraph>' );
-
-			editor.execute( 'delete' );
-
-			expectOutput( '<paragraph>[]</paragraph>', '<p>[]</p>' );
-		} );
-
-		// See https://github.com/ckeditor/ckeditor5-typing/issues/61.
-		it( 'wraps inserted text in a paragraph after typing in editor with selected the whole content #1', () => {
-			setModelData( doc, '[<heading1>Header 1</heading1><paragraph>Some text.</paragraph>]' );
-
-			editor.execute( 'delete' );
-
-			simulateTyping( '123' );
-
-			expectOutput( '<paragraph>123[]</paragraph>', '<p>123{}</p>' );
-		} );
-
-		// See https://github.com/ckeditor/ckeditor5-typing/issues/61.
-		it( 'wraps inserted text in a paragraph after typing in editor with selected the whole content #2', () => {
-			setModelData( doc, '<heading1>[Header 1</heading1><paragraph>Some text.]</paragraph>' );
-
-			editor.execute( 'delete' );
-
-			simulateTyping( '123' );
-
-			expectOutput( '<paragraph>123[]</paragraph>', '<p>123{}</p>' );
 		} );
 	} );
 } );
