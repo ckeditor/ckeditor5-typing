@@ -9,6 +9,7 @@
 
 import Command from '@ckeditor/ckeditor5-core/src/command';
 import ChangeBuffer from './changebuffer';
+import Range from '@ckeditor/ckeditor5-engine/src/model/range';
 
 /**
  * The input command. Used by the {@link module:typing/input~Input input feature} to handle typing.
@@ -72,7 +73,7 @@ export default class InputCommand extends Command {
 		const doc = this.editor.document;
 		const text = options.text || '';
 		const textInsertions = text.length;
-		const range = options.range || doc.selection.getFirstRange();
+		const range = Range.createFromRange( options.range || doc.selection.getFirstRange() );
 		const resultRange = options.resultRange;
 
 		doc.enqueueChanges( () => {
