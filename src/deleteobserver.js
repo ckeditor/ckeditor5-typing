@@ -7,6 +7,8 @@
  * @module typing/deleteobserver
  */
 
+/* global setTimeout */
+
 import Observer from '@ckeditor/ckeditor5-engine/src/view/observer/observer';
 import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata';
 import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
@@ -21,6 +23,37 @@ export default class DeleteObserver extends Observer {
 		super( document );
 
 		let sequence = 0;
+
+		// This will block selection change after `input` event with `deleteContentBackward` type.
+		// Selection change after this event is fired in async manner on android devices. We need to skip those events
+		// to have correct selection state after removing the content.
+		this.blockSelectionChange = false;
+		this.listenTo( document, 'selectionChange', evt => {
+			if ( this.blockSelectionChange ) {
+				evt.stop();
+			}
+		}, { priority: 'high' } );
+
+		document.on( 'input', ( evt, data ) => {
+			const inputType = data.inputType;
+			if ( inputType !== 'deleteContentBackward' ) {
+				return;
+			}
+
+			this.blockSelectionChange = true;
+
+			// Block async selectionChange events fired after input event.
+			setTimeout( () => {
+				this.blockSelectionChange = false;
+				document.render();
+			}, 1 );
+
+			document.fire( 'delete', new DomEventData( document, data.domEvent, {
+				direction: 'backward',
+				unit: 'character',
+				sequence: ++sequence
+			} ) );
+		} );
 
 		document.on( 'keyup', ( evt, data ) => {
 			if ( data.keyCode == keyCodes.delete || data.keyCode == keyCodes.backspace ) {
@@ -45,6 +78,10 @@ export default class DeleteObserver extends Observer {
 			deleteData.sequence = ++sequence;
 
 			document.fire( 'delete', new DomEventData( document, data.domEvent, deleteData ) );
+
+			// Delete key is handled here - do not pass it to the input.
+			evt.stop();
+			data.preventDefault();
 		} );
 	}
 

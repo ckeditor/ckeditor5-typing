@@ -10,6 +10,7 @@
 import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
 import DeleteCommand from './deletecommand';
 import DeleteObserver from './deleteobserver';
+import InputObserver from './inputobserver';
 
 /**
  * The delete and backspace feature. Handles the <kbd>Delete</kbd> and <kbd>Backspace</kbd> keys in the editor.
@@ -29,6 +30,7 @@ export default class Delete extends Plugin {
 		const editingView = editor.editing.view;
 
 		editingView.addObserver( DeleteObserver );
+		editingView.addObserver( InputObserver );
 
 		editor.commands.add( 'forwardDelete', new DeleteCommand( editor, 'forward' ) );
 		editor.commands.add( 'delete', new DeleteCommand( editor, 'backward' ) );
