@@ -31,6 +31,12 @@ export default class DeleteObserver extends Observer {
 		document.on( 'keydown', ( evt, data ) => {
 			const deleteData = {};
 
+			// Do not handle if specific event like `keydown:delete` is fired.
+			// https://github.com/ckeditor/ckeditor5/issues/753
+			if ( evt.name !== 'keydown' ) {
+				return;
+			}
+
 			if ( data.keyCode == keyCodes.delete ) {
 				deleteData.direction = 'forward';
 				deleteData.unit = 'character';
@@ -45,7 +51,11 @@ export default class DeleteObserver extends Observer {
 			deleteData.sequence = ++sequence;
 
 			document.fire( 'delete', new DomEventData( document, data.domEvent, deleteData ) );
-		} );
+
+			// Stop generic `keydown` event and fire specific `keydown:delete` event.
+			evt.stop();
+			document.fire( 'keydown:delete', data );
+		}, { priority: 'highest' } );
 	}
 
 	/**
@@ -66,4 +76,14 @@ export default class DeleteObserver extends Observer {
  * @param {'character'|'word'} data.unit The "amount" of content that should be deleted.
  * @param {Number} data.sequence A number describing which subsequent delete event it is without the key being released.
  * If it's 2 or more it means that the key was pressed and hold.
+ */
+
+/**
+ * Fired when a keydown event was handled by {@link module:typing/deleteobserver~DeleteObserver}.
+ * It can be used to determine if the event was handled by {@link module:typing/deleteobserver~DeleteObserver} or it is
+ * a generic event created by {@link module:engine/view/observer/keyobserver~KeyObserver}.
+ *
+ * @see module:engine/view/observer/keyobserver~KeyObserver
+ * @event module:engine/view/document~Document#event:keydown:delete
+ * @param {module:engine/view/observer/keyobserver~KeyEventData} keyEventData
  */

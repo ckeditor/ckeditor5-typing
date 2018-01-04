@@ -26,7 +26,7 @@ import ViewSelection from '@ckeditor/ckeditor5-engine/src/view/selection';
 import MutationObserver from '@ckeditor/ckeditor5-engine/src/view/observer/mutationobserver';
 
 import EmitterMixin from '@ckeditor/ckeditor5-utils/src/emittermixin';
-import { getCode } from '@ckeditor/ckeditor5-utils/src/keyboard';
+import { getCode, keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
 
 import { getData as getModelData, setData as setModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
 import { getData as getViewData } from '@ckeditor/ckeditor5-engine/src/dev-utils/view';
@@ -615,6 +615,13 @@ describe( 'Input feature', () => {
 			view.fire( 'keydown', { keyCode: getCode( 'b' ) } );
 
 			expect( getModelData( model ) ).to.equal( '<paragraph>fo[ob]ar</paragraph>' );
+		} );
+
+		it( 'should not handle specific events like keydown:abc', () => {
+			setModelData( model, '<paragraph>f[ooba]r</paragraph>' );
+			view.fire( 'keydown:abc', { keyCode: keyCodes.delete } );
+
+			expect( getModelData( model ) ).to.equal( '<paragraph>f[ooba]r</paragraph>' );
 		} );
 	} );
 

@@ -9,6 +9,7 @@ import DeleteObserver from '../src/deleteobserver';
 import ViewDocument from '@ckeditor/ckeditor5-engine/src/view/document';
 import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata';
 import { getCode } from '@ckeditor/ckeditor5-utils/src/keyboard';
+import priorities from '@ckeditor/ckeditor5-utils/src/priorities';
 
 describe( 'DeleteObserver', () => {
 	let viewDocument;
@@ -166,6 +167,52 @@ describe( 'DeleteObserver', () => {
 
 			expect( spy.args[ 0 ][ 1 ] ).to.have.property( 'sequence', 1 );
 			expect( spy.args[ 1 ][ 1 ] ).to.have.property( 'sequence', 2 );
+		} );
+
+		it( 'should listen to keydown generic event on highest priority and block it when handled', () => {
+			const lowerPrioritySpy = sinon.spy();
+			const higherPrioritySpy = sinon.spy();
+			const priority = priorities.get( 'highest' );
+
+			viewDocument.on( 'keydown', genericEventCallback( lowerPrioritySpy ), { priority: priority - 1 } );
+			viewDocument.on( 'keydown', genericEventCallback( higherPrioritySpy ), { priority: priority + 1 } );
+
+			viewDocument.fire( 'keydown', new DomEventData( viewDocument, getDomEvent(), {
+				keyCode: getCode( 'delete' )
+			} ) );
+
+			sinon.assert.calledOnce( higherPrioritySpy );
+			sinon.assert.notCalled( lowerPrioritySpy );
+
+			function genericEventCallback( spy ) {
+				return evt => {
+					if ( evt.name == 'keydown' ) {
+						spy();
+					}
+				};
+			}
+		} );
+
+		it( 'should fire keydown:delete event when delete is handled', () => {
+			const spy = sinon.spy();
+			viewDocument.on( 'keydown:delete', spy );
+
+			viewDocument.fire( 'keydown', new DomEventData( viewDocument, getDomEvent(), {
+				keyCode: getCode( 'delete' )
+			} ) );
+
+			sinon.assert.calledOnce( spy );
+		} );
+
+		it( 'should not fire keydown:delete event when delete is not handled', () => {
+			const spy = sinon.spy();
+			viewDocument.on( 'keydown:delete', spy );
+
+			viewDocument.fire( 'keydown', new DomEventData( viewDocument, getDomEvent(), {
+				keyCode: getCode( 'a' )
+			} ) );
+
+			sinon.assert.notCalled( spy );
 		} );
 	} );
 
