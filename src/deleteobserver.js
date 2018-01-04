@@ -31,6 +31,12 @@ export default class DeleteObserver extends Observer {
 		document.on( 'keydown', ( evt, data ) => {
 			const deleteData = {};
 
+			// Do not handle if specific event like `keydown:delete` is fired.
+			// https://github.com/ckeditor/ckeditor5/issues/753
+			if ( evt.name !== 'keydown' ) {
+				return;
+			}
+
 			if ( data.keyCode == keyCodes.delete ) {
 				deleteData.direction = 'forward';
 				deleteData.unit = 'character';
@@ -45,7 +51,11 @@ export default class DeleteObserver extends Observer {
 			deleteData.sequence = ++sequence;
 
 			document.fire( 'delete', new DomEventData( document, data.domEvent, deleteData ) );
-		} );
+
+			// Stop generic `keydown` event and fire specific `keydown:delete` event.
+			evt.stop();
+			document.fire( 'keydown:delete', data );
+		}, { priority: 'highest' } );
 	}
 
 	/**

@@ -43,6 +43,12 @@ export default class Input extends Plugin {
 		editor.commands.add( 'input', inputCommand );
 
 		this.listenTo( editingView, 'keydown', ( evt, data ) => {
+			// Do not handle if specific event like `keydown:delete` or `keydown:enter` is fired.
+			// https://github.com/ckeditor/ckeditor5/issues/753
+			if ( evt.name !== 'keydown' ) {
+				return;
+			}
+
 			this._handleKeydown( data, inputCommand );
 		}, { priority: 'lowest' } );
 
