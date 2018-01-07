@@ -194,56 +194,41 @@ class MutationHandler {
 		// Create fresh DomConverter so it will not use existing mapping and convert current DOM to model.
 		// This wouldn't be needed if DomConverter would allow to create fresh view without checking any mappings.
 		const freshDomConverter = new DomConverter();
-		const modelFromCurrentDom = this.editor.data.toModel(
+		let modelAfterMutation = this.editor.data.toModel(
 			freshDomConverter.domToView( domMutationCommonAncestor )
-		).getChild( 0 );
+		);
+
+		// When root element is converted its child elements are converted directly to the DocumentFragment.
+		// In other situations common ancestor is converted too so we need to extract it from the DocumentFragment.
+		if ( !mutationsCommonAncestor.is( 'rootElement' ) ) {
+			modelAfterMutation = modelAfterMutation.getChild( 0 );
+		}
 
 		// Current model.
-		const currentModel = this.editor.editing.mapper.toModelElement( mutationsCommonAncestor );
+		const modelBeforeMutation = this.editor.editing.mapper.toModelElement( mutationsCommonAncestor );
 
 		// Get children from both ancestors.
-		const modelFromDomChildren = Array.from( modelFromCurrentDom.getChildren() );
-		const currentModelChildren = Array.from( currentModel.getChildren() );
+		const modelChildrenBeforeMutation = Array.from( modelBeforeMutation.getChildren() );
+		const modelChildrenAfterMutation = Array.from( modelAfterMutation.getChildren() );
 
-		// Skip situations when common ancestor has any elements (cause they are too hard).
-		if ( !hasOnlyTextNodes( modelFromDomChildren ) || !hasOnlyTextNodes( currentModelChildren ) ) {
-			return;
-		}
-
-		// Replace &nbsp; inserted by the browser with normal space.
-		// See comment in `_handleTextMutation`.
-		const newText = modelFromDomChildren.map( item => item.data ).join( '' ).replace( /\u00A0/g, ' ' );
-		const oldText = currentModelChildren.map( item => item.data ).join( '' );
-
-		// Do nothing if mutations created same text.
-		if ( oldText === newText ) {
-			return;
-		}
-
-		const diffResult = diff( oldText, newText );
-
-		const { firstChangeAt, insertions, deletions } = calculateChanges( diffResult );
-
-		// Try setting new model selection according to passed view selection.
+		// Convert view selection to new model selection range.
 		let modelSelectionRange = null;
 
 		if ( viewSelection ) {
 			modelSelectionRange = this.editing.mapper.toModelRange( viewSelection.getFirstRange() );
 		}
 
-		const insertText = newText.substr( firstChangeAt, insertions );
-		const removeRange = ModelRange.createFromParentsAndOffsets(
-			currentModel,
-			firstChangeAt,
-			currentModel,
-			firstChangeAt + deletions
-		);
+		// Handle situation if only text nodes mutated.
+		if ( hasOnlyTextNodes( modelChildrenAfterMutation ) && hasOnlyTextNodes( modelChildrenBeforeMutation ) ) {
+			this._handleMultipleTextNodesMutations(
+				modelBeforeMutation,
+				modelChildrenBeforeMutation,
+				modelChildrenAfterMutation,
+				modelSelectionRange
+			);
+		}
 
-		this.editor.execute( 'input', {
-			text: insertText,
-			range: removeRange,
-			resultRange: modelSelectionRange
-		} );
+		// Handle situations if only containers mutated.
 	}
 
 	_handleTextMutation( mutation, viewSelection ) {
@@ -305,6 +290,36 @@ class MutationHandler {
 			// Just change &nbsp; in case there are some.
 			text: insertedText.replace( /\u00A0/g, ' ' ),
 			range: new ModelRange( modelPos )
+		} );
+	}
+
+	_handleMultipleTextNodesMutations( parent, textNodesBeforeMutation, textNodesAfterMutation, range ) {
+		// Replace &nbsp; inserted by the browser with normal space.
+		// See comment in `_handleTextMutation`.
+		const newText = textNodesAfterMutation.map( item => item.data ).join( '' ).replace( /\u00A0/g, ' ' );
+		const oldText = textNodesBeforeMutation.map( item => item.data ).join( '' );
+
+		// Do nothing if mutations created same text.
+		if ( oldText === newText ) {
+			return;
+		}
+
+		const diffResult = diff( oldText, newText );
+
+		const { firstChangeAt, insertions, deletions } = calculateChanges( diffResult );
+
+		const insertText = newText.substr( firstChangeAt, insertions );
+		const removeRange = ModelRange.createFromParentsAndOffsets(
+			parent,
+			firstChangeAt,
+			parent,
+			firstChangeAt + deletions
+		);
+
+		this.editor.execute( 'input', {
+			text: insertText,
+			range: removeRange,
+			resultRange: range
 		} );
 	}
 }
