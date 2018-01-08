@@ -16,6 +16,7 @@ import diffToChanges from '@ckeditor/ckeditor5-utils/src/difftochanges';
 import { getCode } from '@ckeditor/ckeditor5-utils/src/keyboard';
 import DomConverter from '@ckeditor/ckeditor5-engine/src/view/domconverter';
 import InputCommand from './inputcommand';
+import Batch from '@ckeditor/ckeditor5-engine/src/model/batch';
 
 /**
  * Handles text input coming from the keyboard or other input methods.
@@ -48,7 +49,7 @@ export default class Input extends Plugin {
 
 		this.listenTo( editingView, 'mutations', ( evt, mutations, viewSelection ) => {
 			this._handleMutations( mutations, viewSelection );
-		} );
+		}, { priority: 'highest' } );
 	}
 
 	/**
@@ -174,6 +175,8 @@ class MutationHandler {
 	 * @param {module:engine/view/selection~Selection|null} viewSelection
 	 */
 	_handleContainerChildrenMutations( mutations, viewSelection ) {
+		debugger;
+
 		// Get common ancestor of all mutations.
 		const mutationsCommonAncestor = getMutationsContainer( mutations );
 
@@ -191,25 +194,62 @@ class MutationHandler {
 			return;
 		}
 
+		const commonAncestorMutation = getMutationByParent( mutationsCommonAncestor, mutations );
+
+		if ( commonAncestorMutation && containersRemovedOnly( commonAncestorMutation.oldChildren, commonAncestorMutation.newChildren ) ) {
+			const selection = this.editor.editing.view.selection;
+
+			if ( selection.isCollapsed ) {
+				const position = selection.getFirstPosition();
+				const positionParent = position.parent;
+				const diffResult = diff( commonAncestorMutation.oldChildren, commonAncestorMutation.newChildren );
+				const deleteIndex = diffResult.indexOf( 'delete' );
+				const positionAtRemovedContainer = ViewPosition.createBefore( commonAncestorMutation.oldChildren[ deleteIndex ] );
+
+				// Finding if selection is somewhere at the begining of the container.
+				let parent = commonAncestorMutation.oldChildren[ deleteIndex ];
+				let found = false;
+
+				while( !found ) {
+					if ( parent == positionParent ) {
+						found = true;
+
+						continue;
+					}
+
+					if ( parent.is( 'text' ) || parent.childCount === 0 ) {
+						return;
+					}
+
+					parent = parent.getChild( 0 );
+				}
+
+
+				console.log( deleteIndex );
+			}
+
+			return;
+		}
+
 		// Create fresh DomConverter so it will not use existing mapping and convert current DOM to model.
 		// This wouldn't be needed if DomConverter would allow to create fresh view without checking any mappings.
 		const freshDomConverter = new DomConverter();
-		let modelAfterMutation = this.editor.data.toModel(
+		let modelParentAfterMutation = this.editor.data.toModel(
 			freshDomConverter.domToView( domMutationCommonAncestor )
 		);
 
 		// When root element is converted its child elements are converted directly to the DocumentFragment.
 		// In other situations common ancestor is converted too so we need to extract it from the DocumentFragment.
 		if ( !mutationsCommonAncestor.is( 'rootElement' ) ) {
-			modelAfterMutation = modelAfterMutation.getChild( 0 );
+			modelParentAfterMutation = modelParentAfterMutation.getChild( 0 );
 		}
 
 		// Current model.
-		const modelBeforeMutation = this.editor.editing.mapper.toModelElement( mutationsCommonAncestor );
+		const modelParentBeforeMutation = this.editor.editing.mapper.toModelElement( mutationsCommonAncestor );
 
 		// Get children from both ancestors.
-		const modelChildrenBeforeMutation = Array.from( modelBeforeMutation.getChildren() );
-		const modelChildrenAfterMutation = Array.from( modelAfterMutation.getChildren() );
+		const modelChildrenBeforeMutation = Array.from( modelParentBeforeMutation.getChildren() );
+		const modelChildrenAfterMutation = Array.from( modelParentAfterMutation.getChildren() );
 
 		// Convert view selection to new model selection range.
 		let modelSelectionRange = null;
@@ -219,16 +259,35 @@ class MutationHandler {
 		}
 
 		// Handle situation if only text nodes mutated.
-		if ( hasOnlyTextNodes( modelChildrenAfterMutation ) && hasOnlyTextNodes( modelChildrenBeforeMutation ) ) {
+		if ( hasOnlyTextNodes( modelChildrenBeforeMutation ) && hasOnlyTextNodes( modelChildrenAfterMutation ) ) {
 			this._handleMultipleTextNodesMutations(
-				modelBeforeMutation,
+				modelParentBeforeMutation,
 				modelChildrenBeforeMutation,
 				modelChildrenAfterMutation,
 				modelSelectionRange
 			);
+
+			return;
 		}
 
-		// Handle situations if only containers mutated.
+		// Handle situations when some elements from common container were removed.
+		if ( elementsRemovedOnly( modelChildrenBeforeMutation, modelChildrenAfterMutation ) ) {
+			// const model = this.editor.model;
+			// const selection = model.document.selection;
+            //
+			// if ( selection.isCollapsed ) {
+			// 	const position = selection.getFirstPosition();
+			// 	const positionParent = position.parent;
+			// 	const diffResult = diff( modelChildrenBeforeMutation, modelChildrenAfterMutation, ( a, b ) => a.name == b.name );
+			// 	const deleteIndex = diffResult.indexOf( 'delete' );
+			// 	const positionParentIndex = modelChildrenBeforeMutation.indexOf( positionParent );
+            //
+			// 	console.log( diffResult, deleteIndex, positionParentIndex, position.offset );
+			// 	if ( deleteIndex == positionParentIndex && position.offset === 0 ) {
+			// 		this.editor.execute( 'delete' );
+			// 	}
+			// }
+		}
 	}
 
 	_handleTextMutation( mutation, viewSelection ) {
@@ -456,6 +515,48 @@ function containerChildrenMutated( mutations ) {
 // @returns {Boolean}
 function hasOnlyTextNodes( children ) {
 	return children.every( child => child.is( 'text' ) );
+}
+
+function hasOnlyElements( children ) {
+	return children.every( child => child.is( 'element' ) );
+}
+
+function hasOnlyContainers( children ) {
+	return children.every( child => child.is( 'containerElement' ) );
+}
+
+function containersRemovedOnly( childrenBefore, childrenAfter ) {
+	if ( !hasOnlyContainers( childrenBefore ) || !hasOnlyContainers( childrenAfter ) ) {
+		return false;
+	}
+
+	const diffResult = diff( childrenBefore, childrenAfter );
+
+	const hasDelete = diffResult.some( item => item == 'delete' );
+	const hasInsert = diffResult.some( item => item == 'insert' );
+
+	return hasDelete && !hasInsert;
+}
+
+function elementsRemovedOnly( childrenBefore, childrenAfter ) {
+	if ( !hasOnlyElements( childrenBefore ) || !hasOnlyElements( childrenAfter ) ) {
+		return false;
+	}
+
+	const diffResult = diff( childrenBefore, childrenAfter, ( a, b ) => a.name == b.name );
+
+	const hasDelete = diffResult.some( item => item == 'delete' );
+	const hasInsert = diffResult.some( item => item == 'insert' );
+
+	return hasDelete && !hasInsert;
+}
+
+function getMutationByParent( node, mutations ) {
+	for ( const mutation of mutations ) {
+		if ( mutation.node === node ) {
+			return mutation;
+		}
+	}
 }
 
 // Calculates first change index and number of characters that should be inserted and deleted starting from that index.
