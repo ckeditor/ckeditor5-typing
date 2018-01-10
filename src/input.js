@@ -174,7 +174,7 @@ class MutationHandler {
 	 * @param {module:engine/view/selection~Selection|null} viewSelection
 	 */
 	_handleContainerChildrenMutations( mutations, viewSelection ) {
-		// Handle situation when container has only other containers inside and one of them was removed.
+		// Handle situation when container has only other containers inside and some of them were removed.
 		if ( this._onlyContainersRemoved( mutations ) ) {
 			this.editor.execute( 'delete' );
 
@@ -334,7 +334,19 @@ class MutationHandler {
 				continue;
 			}
 
-			if ( containersRemovedOnly( mutation.oldChildren, mutation.newChildren ) ) {
+			const childrenBefore = mutation.oldChildren;
+			const childrenAfter = mutation.newChildren;
+
+			if ( !hasOnlyContainers( childrenBefore ) || !hasOnlyContainers( childrenAfter ) ) {
+				continue;
+			}
+
+			const diffResult = diff( childrenBefore, childrenAfter );
+
+			const hasDelete = diffResult.some( item => item == 'delete' );
+			const hasInsert = diffResult.some( item => item == 'insert' );
+
+			if ( hasDelete && !hasInsert ) {
 				return true;
 			}
 		}
@@ -479,19 +491,6 @@ function hasOnlyTextNodes( children ) {
 
 function hasOnlyContainers( children ) {
 	return children.every( child => child.is( 'containerElement' ) );
-}
-
-function containersRemovedOnly( childrenBefore, childrenAfter ) {
-	if ( !hasOnlyContainers( childrenBefore ) || !hasOnlyContainers( childrenAfter ) ) {
-		return false;
-	}
-
-	const diffResult = diff( childrenBefore, childrenAfter );
-
-	const hasDelete = diffResult.some( item => item == 'delete' );
-	const hasInsert = diffResult.some( item => item == 'insert' );
-
-	return hasDelete && !hasInsert;
 }
 
 // Calculates first change index and number of characters that should be inserted and deleted starting from that index.
