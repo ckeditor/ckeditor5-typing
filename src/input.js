@@ -16,7 +16,6 @@ import diffToChanges from '@ckeditor/ckeditor5-utils/src/difftochanges';
 import { getCode } from '@ckeditor/ckeditor5-utils/src/keyboard';
 import DomConverter from '@ckeditor/ckeditor5-engine/src/view/domconverter';
 import InputCommand from './inputcommand';
-import Batch from '@ckeditor/ckeditor5-engine/src/model/batch';
 
 /**
  * Handles text input coming from the keyboard or other input methods.
@@ -175,7 +174,12 @@ class MutationHandler {
 	 * @param {module:engine/view/selection~Selection|null} viewSelection
 	 */
 	_handleContainerChildrenMutations( mutations, viewSelection ) {
-		debugger;
+		// Handle situation when container has only other containers inside and one of them was removed.
+		if ( this._onlyContainersRemoved( mutations ) ) {
+			this.editor.execute( 'delete' );
+
+			return;
+		}
 
 		// Get common ancestor of all mutations.
 		const mutationsCommonAncestor = getMutationsContainer( mutations );
@@ -191,43 +195,6 @@ class MutationHandler {
 		const domMutationCommonAncestor = domConverter.mapViewToDom( mutationsCommonAncestor );
 
 		if ( !domMutationCommonAncestor ) {
-			return;
-		}
-
-		const commonAncestorMutation = getMutationByParent( mutationsCommonAncestor, mutations );
-
-		if ( commonAncestorMutation && containersRemovedOnly( commonAncestorMutation.oldChildren, commonAncestorMutation.newChildren ) ) {
-			const selection = this.editor.editing.view.selection;
-
-			if ( selection.isCollapsed ) {
-				const position = selection.getFirstPosition();
-				const positionParent = position.parent;
-				const diffResult = diff( commonAncestorMutation.oldChildren, commonAncestorMutation.newChildren );
-				const deleteIndex = diffResult.indexOf( 'delete' );
-				const positionAtRemovedContainer = ViewPosition.createBefore( commonAncestorMutation.oldChildren[ deleteIndex ] );
-
-				// Finding if selection is somewhere at the begining of the container.
-				let parent = commonAncestorMutation.oldChildren[ deleteIndex ];
-				let found = false;
-
-				while( !found ) {
-					if ( parent == positionParent ) {
-						found = true;
-
-						continue;
-					}
-
-					if ( parent.is( 'text' ) || parent.childCount === 0 ) {
-						return;
-					}
-
-					parent = parent.getChild( 0 );
-				}
-
-
-				console.log( deleteIndex );
-			}
-
 			return;
 		}
 
@@ -266,27 +233,6 @@ class MutationHandler {
 				modelChildrenAfterMutation,
 				modelSelectionRange
 			);
-
-			return;
-		}
-
-		// Handle situations when some elements from common container were removed.
-		if ( elementsRemovedOnly( modelChildrenBeforeMutation, modelChildrenAfterMutation ) ) {
-			// const model = this.editor.model;
-			// const selection = model.document.selection;
-            //
-			// if ( selection.isCollapsed ) {
-			// 	const position = selection.getFirstPosition();
-			// 	const positionParent = position.parent;
-			// 	const diffResult = diff( modelChildrenBeforeMutation, modelChildrenAfterMutation, ( a, b ) => a.name == b.name );
-			// 	const deleteIndex = diffResult.indexOf( 'delete' );
-			// 	const positionParentIndex = modelChildrenBeforeMutation.indexOf( positionParent );
-            //
-			// 	console.log( diffResult, deleteIndex, positionParentIndex, position.offset );
-			// 	if ( deleteIndex == positionParentIndex && position.offset === 0 ) {
-			// 		this.editor.execute( 'delete' );
-			// 	}
-			// }
 		}
 	}
 
@@ -380,6 +326,20 @@ class MutationHandler {
 			range: removeRange,
 			resultRange: range
 		} );
+	}
+
+	_onlyContainersRemoved( mutations ) {
+		for ( const mutation of mutations ) {
+			if ( mutation.type != 'children' ) {
+				continue;
+			}
+
+			if ( containersRemovedOnly( mutation.oldChildren, mutation.newChildren ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
 
@@ -517,10 +477,6 @@ function hasOnlyTextNodes( children ) {
 	return children.every( child => child.is( 'text' ) );
 }
 
-function hasOnlyElements( children ) {
-	return children.every( child => child.is( 'element' ) );
-}
-
 function hasOnlyContainers( children ) {
 	return children.every( child => child.is( 'containerElement' ) );
 }
@@ -536,27 +492,6 @@ function containersRemovedOnly( childrenBefore, childrenAfter ) {
 	const hasInsert = diffResult.some( item => item == 'insert' );
 
 	return hasDelete && !hasInsert;
-}
-
-function elementsRemovedOnly( childrenBefore, childrenAfter ) {
-	if ( !hasOnlyElements( childrenBefore ) || !hasOnlyElements( childrenAfter ) ) {
-		return false;
-	}
-
-	const diffResult = diff( childrenBefore, childrenAfter, ( a, b ) => a.name == b.name );
-
-	const hasDelete = diffResult.some( item => item == 'delete' );
-	const hasInsert = diffResult.some( item => item == 'insert' );
-
-	return hasDelete && !hasInsert;
-}
-
-function getMutationByParent( node, mutations ) {
-	for ( const mutation of mutations ) {
-		if ( mutation.node === node ) {
-			return mutation;
-		}
-	}
 }
 
 // Calculates first change index and number of characters that should be inserted and deleted starting from that index.
