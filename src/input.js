@@ -337,12 +337,14 @@ class MutationHandler {
 			const childrenBefore = mutation.oldChildren;
 			const childrenAfter = mutation.newChildren;
 
-			if ( !hasOnlyContainers( childrenBefore ) || !hasOnlyContainers( childrenAfter ) ) {
+			// Check if only containers were present before the mutation.
+			if ( !hasOnlyContainers( childrenBefore ) ) {
 				continue;
 			}
 
 			const diffResult = diff( childrenBefore, childrenAfter );
 
+			// Check if there was only removing in that mutation without any insertions.
 			const hasDelete = diffResult.some( item => item == 'delete' );
 			const hasInsert = diffResult.some( item => item == 'insert' );
 
