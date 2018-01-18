@@ -145,7 +145,7 @@ class MutationHandler {
 	 */
 	handle( mutations, viewSelection ) {
 		if ( containerChildrenMutated( mutations ) ) {
-			this._handleContainerChildrenMutations( mutations, viewSelection );
+			this._handleContainerChildrenMutations( mutations );
 		} else {
 			for ( const mutation of mutations ) {
 				// Fortunately it will never be both.
@@ -173,7 +173,7 @@ class MutationHandler {
 	 * module:engine/view/observer/mutationobserver~MutatedChildren>} mutations
 	 * @param {module:engine/view/selection~Selection|null} viewSelection
 	 */
-	_handleContainerChildrenMutations( mutations, viewSelection ) {
+	_handleContainerChildrenMutations( mutations ) {
 		// Handle situation when container has only other containers inside and some of them were removed.
 		if ( this._onlyContainersRemoved( mutations ) ) {
 			this.editor.execute( 'delete' );
@@ -218,20 +218,12 @@ class MutationHandler {
 		const modelChildrenBeforeMutation = Array.from( modelParentBeforeMutation.getChildren() );
 		const modelChildrenAfterMutation = Array.from( modelParentAfterMutation.getChildren() );
 
-		// Convert view selection to new model selection range.
-		let modelSelectionRange = null;
-
-		if ( viewSelection ) {
-			modelSelectionRange = this.editing.mapper.toModelRange( viewSelection.getFirstRange() );
-		}
-
 		// Handle situation if only text nodes mutated.
 		if ( hasOnlyTextNodes( modelChildrenBeforeMutation ) && hasOnlyTextNodes( modelChildrenAfterMutation ) ) {
 			this._handleMultipleTextNodesMutations(
 				modelParentBeforeMutation,
 				modelChildrenBeforeMutation,
-				modelChildrenAfterMutation,
-				modelSelectionRange
+				modelChildrenAfterMutation
 			);
 		}
 	}
@@ -298,7 +290,7 @@ class MutationHandler {
 		} );
 	}
 
-	_handleMultipleTextNodesMutations( parent, textNodesBeforeMutation, textNodesAfterMutation, range ) {
+	_handleMultipleTextNodesMutations( parent, textNodesBeforeMutation, textNodesAfterMutation ) {
 		// Replace &nbsp; inserted by the browser with normal space.
 		// See comment in `_handleTextMutation`.
 		const newText = textNodesAfterMutation.map( item => item.data ).join( '' ).replace( /\u00A0/g, ' ' );
@@ -314,7 +306,7 @@ class MutationHandler {
 		const { firstChangeAt, insertions, deletions } = calculateChanges( diffResult );
 
 		const insertText = newText.substr( firstChangeAt, insertions );
-		const removeRange = ModelRange.createFromParentsAndOffsets(
+		const range = ModelRange.createFromParentsAndOffsets(
 			parent,
 			firstChangeAt,
 			parent,
@@ -323,8 +315,7 @@ class MutationHandler {
 
 		this.editor.execute( 'input', {
 			text: insertText,
-			range: removeRange,
-			resultRange: range
+			range
 		} );
 	}
 

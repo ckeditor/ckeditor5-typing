@@ -981,41 +981,9 @@ describe( 'Input feature', () => {
 			expect( getViewData( view ) ).to.equal( '<p><strong>text{}</strong></p>' );
 		} );
 
-		it( 'should handle view selection if one is returned from mutations', () => {
-			setModelData( model,
-				'<paragraph>' +
-					'<$text bold="true">' +
-						'text[]' +
-					'</$text>' +
-				'</paragraph>'
-			);
-
-			expect( getViewData( view ) ).to.equal( '<p><strong>text{}</strong></p>' );
-
-			const paragraph = viewRoot.getChild( 0 );
-			const strong = paragraph.getChild( 0 );
-			const viewSelection = new ViewSelection();
-			viewSelection.setCollapsedAt( paragraph, 0 );
-
-			// Simulate mutations and DOM change.
-			domRoot.childNodes[ 0 ].innerHTML = '<b>textx</b>';
-			view.fire( 'mutations', [
-				// Replace `<strong>` with `<b>`.
-				{
-					type: 'children',
-					node: paragraph,
-					oldChildren: [ strong ],
-					newChildren: [ new ViewElement( 'b', null, new ViewText( 'textx' ) ) ]
-				}
-			], viewSelection );
-
-			expect( getModelData( model ) ).to.equal( '<paragraph><$text bold="true">[]textx</$text></paragraph>' );
-			expect( getViewData( view ) ).to.equal( '<p><strong>{}textx</strong></p>' );
-		} );
-
 		// #117.
 		it( 'should handle mixed mutations', () => {
-			setModelData( model, '<paragraph><$text bold="true">Foo bar aple</$text></paragraph>' );
+			setModelData( model, '<paragraph><$text bold="true">Foo bar ap{}le</$text></paragraph>' );
 
 			const paragraph = viewRoot.getChild( 0 );
 			const strong = paragraph.getChild( 0 );
@@ -1039,8 +1007,8 @@ describe( 'Input feature', () => {
 				}
 			], viewSelection );
 
-			expect( getModelData( model ) ).to.equal( '<paragraph><$text bold="true">[]Foo bar apple</$text></paragraph>' );
-			expect( getViewData( view ) ).to.equal( '<p><strong>{}Foo bar apple</strong></p>' );
+			expect( getModelData( model ) ).to.equal( '<paragraph><$text bold="true">Foo bar app[]le</$text></paragraph>' );
+			expect( getViewData( view ) ).to.equal( '<p><strong>Foo bar app{}le</strong></p>' );
 		} );
 	} );
 } );
