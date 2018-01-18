@@ -313,9 +313,13 @@ class MutationHandler {
 			firstChangeAt + deletions
 		);
 
+		// Set range after all made by mutation changes.
+		const resultRange = ModelRange.createCollapsedAt( parent, firstChangeAt + insertions );
+
 		this.editor.execute( 'input', {
 			text: insertText,
-			range
+			range,
+			resultRange
 		} );
 	}
 
