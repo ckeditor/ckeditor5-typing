@@ -53,6 +53,7 @@ export default class InputCommand extends Command {
 		super.destroy();
 
 		this._buffer.destroy();
+		this._buffer = null;
 	}
 
 	/**
