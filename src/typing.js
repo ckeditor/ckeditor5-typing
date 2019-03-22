@@ -10,6 +10,7 @@
 import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
 import Input from './input';
 import Delete from './delete';
+import BiDi from './bidi';
 
 /**
  * The typing feature. It handles typing.
@@ -21,7 +22,7 @@ import Delete from './delete';
  */
 export default class Typing extends Plugin {
 	static get requires() {
-		return [ Input, Delete ];
+		return [ Input, Delete, BiDi ];
 	}
 
 	/**
