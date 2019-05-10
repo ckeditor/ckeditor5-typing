@@ -82,6 +82,8 @@ export default class InputCommand extends Command {
 
 			this._buffer.lock();
 
+			model.deleteContent( model.createSelection( range ) );
+
 			if ( text ) {
 				model.insertContent( writer.createText( text, doc.selection.getAttributes() ), range.start );
 			}
