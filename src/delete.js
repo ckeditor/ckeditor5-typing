@@ -38,7 +38,10 @@ export default class Delete extends Plugin {
 
 		this.listenTo( viewDocument, 'delete', ( evt, data ) => {
 			editor.execute( data.direction == 'forward' ? 'forwardDelete' : 'delete', { unit: data.unit, sequence: data.sequence } );
+
+			evt.stop();
 			data.preventDefault();
+
 			view.scrollToTheSelection();
 		} );
 

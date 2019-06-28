@@ -60,6 +60,27 @@ describe( 'Delete feature', () => {
 		expect( spy.calledWithMatch( 'delete', { unit: 'character', sequence: 5 } ) ).to.be.true;
 	} );
 
+	it( 'stops delete event after executing a command', () => {
+		const spy = editor.execute = sinon.spy();
+		const eventSpy = sinon.spy();
+
+		const viewDocument = editor.editing.view.document;
+		const domEvt = getDomEvent();
+
+		viewDocument.on( 'delete', eventSpy );
+
+		viewDocument.fire( 'delete', new DomEventData( viewDocument, domEvt, {
+			direction: 'forward',
+			unit: 'character',
+			sequence: 1
+		} ) );
+
+		expect( spy.calledOnce ).to.be.true;
+		expect( spy.calledWithMatch( 'forwardDelete', { unit: 'character', sequence: 1 } ) ).to.be.true;
+
+		expect( eventSpy.called ).to.be.false;
+	} );
+
 	it( 'scrolls the editing document to the selection after executing the command', () => {
 		const scrollSpy = sinon.stub( editor.editing.view, 'scrollToTheSelection' );
 		const executeSpy = editor.execute = sinon.spy();
