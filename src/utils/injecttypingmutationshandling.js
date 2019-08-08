@@ -242,13 +242,36 @@ class MutationHandler {
 		const modelPos = this.editing.mapper.toModelPosition( viewPos );
 		const insertedText = change.values[ 0 ].data;
 
+		// When we use Chinese IME in Safari, the dom selection won't be collapsed while composing.
+		// But the input command would still set a collapsed selection after insertion,
+		// make _domSelectionNeedsUpdate to be true and unnecessarily update the composition selection,
+		// which would break the IME composistion and causing the bug described in:
+		//
+		// https://github.com/ckeditor/ckeditor5/issues/1333
+		//
+		// This fix ensure the input command respects the actual dom selection while composing
+		// in whichever browser.
+		let resultRange;
+		const { document, domConverter } = this.editing.view;
+		if ( document.isComposing ) {
+			const domRoot = domConverter.mapViewToDom( document.selection.editableElement );
+			const domSelection = domRoot.ownerDocument.getSelection();
+
+			if ( !domSelection.isCollapsed && domSelection.anchorNode === domSelection.focusNode ) {
+				resultRange = this.editor.model.createRange(
+					modelPos, modelPos.getShiftedBy( domSelection.focusOffset - domSelection.anchorOffset )
+				);
+			}
+		}
+
 		this.editor.execute( 'input', {
 			// Replace &nbsp; inserted by the browser with normal space.
 			// See comment in `_handleTextMutation`.
 			// In this case we don't need to do this before `diff` because we diff whole nodes.
 			// Just change &nbsp; in case there are some.
 			text: insertedText.replace( /\u00A0/g, ' ' ),
-			range: this.editor.model.createRange( modelPos )
+			range: this.editor.model.createRange( modelPos ),
+			resultRange
 		} );
 	}
 }

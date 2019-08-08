@@ -1017,6 +1017,81 @@ describe( 'Input feature', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph><$text bold="true">fo[]</$text><$text italic="true">ar</$text></paragraph>' );
 			} );
+
+			it( 'should not break composition in an empty paragraph in Safari', () => {
+				setModelData( model, '<paragraph>[]</paragraph>' );
+
+				// When we use Chinese IME in Safari, the dom selection won't be collapsed while composing
+				const p = viewRoot.getChild( 0 );
+				const domP = editor.editing.view.domConverter.mapViewToDom( p );
+				const getSelectionStub = testUtils.sinon.stub( document, 'getSelection' ).returns( {
+					rangeCount: 1,
+					isCollapsed: false,
+					anchorNode: domP,
+					anchorOffset: 0,
+					focusNode: domP,
+					focusOffset: 1,
+					getRangeAt: () => ( {
+						collapsed: false,
+						startContainer: domP,
+						startOffset: 0,
+						endContainer: domP,
+						endOffset: 1,
+						commonAncestorContainer: domP,
+					} ),
+				} );
+
+				viewDocument.fire( 'compositionstart' );
+				viewDocument.fire( 'mutations', [
+					{
+						type: 'children',
+						oldChildren: [],
+						newChildren: [ new ViewText( 'c' ) ],
+						node: viewRoot.getChild( 0 )
+					}
+				] );
+
+				expect( getSelectionStub.called ).to.equal( true );
+				expect( getModelData( model ) ).to.equal( '<paragraph>[c]</paragraph>' );
+				getSelectionStub.restore();
+			} );
+
+			it( 'should not break composition in an empty paragraph in browsers except Safari', () => {
+				setModelData( model, '<paragraph>[]</paragraph>' );
+
+				const p = viewRoot.getChild( 0 );
+				const domP = editor.editing.view.domConverter.mapViewToDom( p );
+				const getSelectionStub = testUtils.sinon.stub( document, 'getSelection' ).returns( {
+					rangeCount: 1,
+					isCollapsed: true,
+					anchorNode: domP,
+					anchorOffset: 1,
+					focusNode: domP,
+					focusOffset: 1,
+					getRangeAt: () => ( {
+						collapsed: true,
+						startContainer: domP,
+						startOffset: 1,
+						endContainer: domP,
+						endOffset: 1,
+						commonAncestorContainer: domP,
+					} ),
+				} );
+
+				viewDocument.fire( 'compositionstart' );
+				viewDocument.fire( 'mutations', [
+					{
+						type: 'children',
+						oldChildren: [],
+						newChildren: [ new ViewText( 'c' ) ],
+						node: viewRoot.getChild( 0 )
+					}
+				] );
+
+				expect( getSelectionStub.called ).to.equal( true );
+				expect( getModelData( model ) ).to.equal( '<paragraph>c[]</paragraph>' );
+				getSelectionStub.restore();
+			} );
 		} );
 	} );
 } );
