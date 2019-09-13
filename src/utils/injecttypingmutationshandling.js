@@ -119,7 +119,9 @@ class MutationHandler {
 		// This situation happens for example for lists. If `<ul>` is a common ancestor, `currentModel` is `undefined`
 		// because `<ul>` is not mapped (`<li>`s are).
 		// See https://github.com/ckeditor/ckeditor5/issues/718.
-		if ( !currentModel ) {
+		// Also, if a current DOM was cleared (happened with VUE integration - it is also safe to return early here.
+		// See https://github.com/ckeditor/ckeditor5/issues/2016.
+		if ( !currentModel || !modelFromCurrentDom ) {
 			return;
 		}
 

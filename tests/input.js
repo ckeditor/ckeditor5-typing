@@ -697,6 +697,32 @@ describe( 'Input feature', () => {
 
 			expect( getViewData( view ) ).to.equal( '<p>Foox{}<strong> </strong> Bar</p>' );
 		} );
+
+		// https://github.com/ckeditor/ckeditor5/issues/2016
+		it( 'should not crash on external modifications to the editing DOM root', done => {
+			editor.setData( '<p>Foo</p>' );
+
+			model.document.on( 'change:data', () => {
+				const domRoot = editor.editing.view.getDomRoot( 'main' );
+				domRoot.removeChild( domRoot.children[ 0 ] );
+
+				const p = viewRoot.getChild( 0 );
+
+				viewDocument.fire( 'mutations', [
+					{
+						type: 'children',
+						oldChildren: [ p ],
+						newChildren: [],
+						node: viewRoot
+					}
+				] );
+
+				done();
+			} );
+
+			const paragraph = model.document.getRoot().getChild( 0 );
+			model.deleteContent( model.createSelection( paragraph, 'in' ) );
+		} );
 	} );
 
 	describe( 'keystroke handling', () => {
